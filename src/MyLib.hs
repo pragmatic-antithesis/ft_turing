@@ -1,4 +1,6 @@
 module MyLib (someFunc) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+someFunc :: String -> IO Int
+someFunc arg = do
+  putStrLn arg
+  return 0
