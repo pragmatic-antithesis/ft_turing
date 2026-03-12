@@ -1,6 +1,6 @@
 module Main where
 
-import MyLib qualified (someFunc)
+import Args qualified (parseArgs)
 import System.Environment
 import System.Exit
 
@@ -13,5 +13,4 @@ main = do
     n -> exitWith (ExitFailure n)
 
 runProgram :: [String] -> IO Int
-runProgram [x] = MyLib.someFunc x
-runProgram _ = return 1
+runProgram x = Args.parseArgs x
