@@ -5,12 +5,23 @@ import System.Environment
 import System.Exit
 
 main :: IO ()
-main = do
-  args <- getArgs
-  exitCode <- runProgram args
-  case exitCode of
-    0 -> exitSuccess
-    n -> exitWith (ExitFailure n)
+main =
+  do
+    getArgs >>= Args.parseArgs >>= exit
 
-runProgram :: [String] -> IO Int
-runProgram x = Args.parseArgs x
+exit :: Int -> IO ()
+exit 0 = exitSuccess
+exit n = exitWith (ExitFailure n)
+
+-- https://blog.thomasheartman.com/posts/haskells-maybe-and-either-types
+-- https://softwarepatternslexicon.com/haskell/functional-design-patterns/advanced-error-handling-with-either-and-exceptt/
+
+-- type App a = ExceptT ExitCode IO a
+-- main = getArgs
+--        & liftIO            -- lift IO [String] into App
+--        >>= parseArgs
+--        >>= openFile
+--        >>= parseFile
+--        >>= runAnalysis
+--        & runExceptT
+--        >>= either exitWith (const exitSuccess)
