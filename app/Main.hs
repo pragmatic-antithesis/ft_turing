@@ -1,17 +1,16 @@
 module Main where
 
 import Args qualified (parseArgs)
+import Shared qualified
 import System.Environment
-import System.Exit
 
 main :: IO ()
 main =
   do
-    getArgs >>= Args.parseArgs >>= exit
-
-exit :: Int -> IO ()
-exit 0 = exitSuccess
-exit n = exitWith (ExitFailure n)
+    args <- getArgs
+    case Args.parseArgs args of
+      Left message -> Shared.exit message
+      Right (x, y) -> putStrLn ("1st: " ++ x ++ "\n2nd: " ++ y)
 
 -- https://blog.thomasheartman.com/posts/haskells-maybe-and-either-types
 -- https://softwarepatternslexicon.com/haskell/functional-design-patterns/advanced-error-handling-with-either-and-exceptt/

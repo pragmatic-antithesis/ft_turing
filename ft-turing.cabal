@@ -59,7 +59,9 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Args
+    exposed-modules:
+        Args
+        Shared
 
     -- Modules included in this library but not exported.
     -- other-modules:
