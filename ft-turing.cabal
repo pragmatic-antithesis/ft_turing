@@ -101,7 +101,9 @@ executable ft-turing
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.18.3.0,
-        ft-turing
+        ft-turing,
+        containers,
+        text
 
     -- Directories containing source files.
     hs-source-dirs:   app
