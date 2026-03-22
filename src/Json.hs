@@ -58,11 +58,10 @@ parseTransitions obj = do
   pure $ Map.fromList parsed
   where
     parsePair (k, v) = do
-      ts <- Aeson.parseJSON v -- [JsonTransition]
+      ts <- Aeson.parseJSON v
       let transitions = [t | JsonTransition t <- ts]
       pure (Key.toText k, transitions)
 
--- File reader
 readTuringMachine :: FilePath -> IO (Either String TuringMachine)
 readTuringMachine filePath = do
   jsonData <- B.readFile filePath

@@ -5,7 +5,8 @@ import Data.Text qualified as T
 import GHC.Generics (Generic)
 
 data TuringMachine = TuringMachine
-  { name :: T.Text,
+  {
+    name :: T.Text,
     alphabet :: [T.Text],
     blank :: T.Text,
     states :: [T.Text],
@@ -16,7 +17,8 @@ data TuringMachine = TuringMachine
   deriving (Show, Generic)
 
 data Transition = Transition
-  { readChar :: T.Text,
+  {
+    readChar :: T.Text,
     toState :: T.Text,
     writeChar :: T.Text,
     action :: Action
