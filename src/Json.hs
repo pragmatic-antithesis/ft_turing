@@ -19,32 +19,32 @@ newtype JsonTransition = JsonTransition Transition
 newtype JsonTuringMachine = JsonTuringMachine TuringMachine
 
 instance FromJSON JsonAction where
-  parseJSON = withText "Action" $ \t ->
-    case t of
+  parseJSON = withText "Action" $ \a ->
+    case a of
       "LEFT" -> pure $ JsonAction TuringMachine.Left
       "RIGHT" -> pure $ JsonAction TuringMachine.Right
-      _ -> fail $ "Invalid action: " ++ T.unpack t
+      _ -> fail $ "Invalid action: " ++ T.unpack a
 
 instance FromJSON JsonTransition where
-  parseJSON = withObject "Transition" $ \v -> do
-    readChar <- v .: "read"
-    toState <- v .: "to_state"
-    writeChar <- v .: "write"
-    JsonAction action <- v .: "action"
+  parseJSON = withObject "Transition" $ \t -> do
+    readChar <- t .: "read"
+    toState <- t .: "to_state"
+    writeChar <- t .: "write"
+    JsonAction action <- t .: "action"
     pure $
       JsonTransition $
         Transition readChar toState writeChar action
 
 instance FromJSON JsonTuringMachine where
-  parseJSON = withObject "TuringMachine" $ \v -> do
-    name <- v .: "name"
-    alphabet <- v .: "alphabet"
-    blank <- v .: "blank"
-    states <- v .: "states"
-    initial <- v .: "initial"
-    finals <- v .: "finals"
+  parseJSON = withObject "TuringMachine" $ \m -> do
+    name <- m .: "name"
+    alphabet <- m .: "alphabet"
+    blank <- m .: "blank"
+    states <- m .: "states"
+    initial <- m .: "initial"
+    finals <- m .: "finals"
 
-    transitionsObj <- (v .: "transitions" :: Parser Aeson.Object)
+    transitionsObj <- (m .: "transitions" :: Parser Aeson.Object)
     transitions <- parseTransitions transitionsObj
 
     pure $
