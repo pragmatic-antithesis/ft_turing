@@ -30,4 +30,6 @@ clean:
 fclean: clean
 	@rm -f ./$(PROJECT_NAME)
 
-.PHONY: all build change clean
+re: fclean all
+
+.PHONY: all build change clean fclean re

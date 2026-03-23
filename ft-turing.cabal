@@ -78,8 +78,7 @@ library
         aeson,
         text,
         containers,
-        bytestring,
-        vector
+        bytestring
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -104,8 +103,7 @@ executable ft-turing
     build-depends:
         base ^>=4.18.3.0,
         ft-turing,
-        containers,
-        text
+        containers
 
     -- Directories containing source files.
     hs-source-dirs:   app

@@ -7,7 +7,6 @@ parseArgs [x, y] = Right (x, y)
 parseArgs [arg] = singleArg arg
   where
     singleArg a
-      | a `elem` ["--help", "-h"] = do
-          Left Shared.helpMessage
+      | a `elem` ["--help", "-h"] = Left Shared.helpMessage
       | otherwise = Left Shared.showUsage
 parseArgs _ = Left Shared.showUsage

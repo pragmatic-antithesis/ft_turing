@@ -1,7 +1,6 @@
 module Main where
 
 import Args (parseArgs)
-import Data.Map qualified as Map
 import Json (parseTuringMachine)
 import Shared qualified as S
 import System.Environment (getArgs)
@@ -15,15 +14,11 @@ main = do
     Right (machineCandidate, input) -> do
       result <- parseTuringMachine machineCandidate
       case result of
-        Left err -> putStrLn $ "Error parsing JSON: " ++ err
+        Left err -> S.exit err
         Right machine -> do
           S.printMachineInfo machine
-          putStrLn $ replicate 80 '*'
-
-          -- Map.foldlWithKey (\_ k v -> S.printTransition k v) () (transitions machine)
-          -- putStrLn $ replicate 80 '*'
 
           runner <- runMachine machine input
           case runner of
             Left err -> S.exit err
-            Right trace -> S.printExecutionTrace trace
+            Right trace -> S.printExecutionTrace machine trace

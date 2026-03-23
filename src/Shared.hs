@@ -1,5 +1,7 @@
 module Shared where
 
+import Data.List (intercalate)
+import Data.Map as Map
 import System.Exit
 import System.IO (hPutStrLn, stderr)
 import Tape
@@ -28,10 +30,11 @@ printMachineInfo machine = do
   putStrLn $ "* " ++ initialState machine ++ " *"
   putStrLn $ "*" ++ replicate 78 ' ' ++ "*"
   putStrLn $ replicate 80 '*'
-  putStrLn $ "Alphabet: [ " ++ unwords (map show $ alphabet machine) ++ " ]"
-  putStrLn $ "States : [ " ++ unwords (states machine) ++ " ]"
+  putStrLn $ "Alphabet: [ " ++ intercalate ", " (Prelude.map (: []) (alphabet machine)) ++ " ]"
+  putStrLn $ "States : [ " ++ intercalate ", " (states machine) ++ " ]"
   putStrLn $ "Initial : " ++ initialState machine
-  putStrLn $ "Finals : [ " ++ unwords (finalStates machine) ++ " ]"
+  putStrLn $ "Finals : [ " ++ intercalate ", " (finalStates machine) ++ " ]"
+  mapM_ (uncurry printTransition) (Map.toList (transitions machine))
   putStrLn $ replicate 80 '*'
 
 printTransition :: (State, Symbol) -> Transition -> IO ()
@@ -53,11 +56,34 @@ printTransition (state, sym) (Transition nextState writeSym dir) = do
     showDir 1 = "RIGHT"
     showDir d = "UNKNOWN(" ++ show d ++ ")"
 
-printExecutionTrace :: [(State, Tape)] -> IO ()
-printExecutionTrace [] = return ()
-printExecutionTrace [(state, tape)] = do
+printExecutionTrace :: TuringMachine -> [(State, Tape)] -> IO ()
+printExecutionTrace _ [] = return ()
+printExecutionTrace _ [(state, tape)] = do
   putStrLn $ "\nMachine halted in state: " ++ state
   putStrLn $ "Final tape: " ++ showTapeWithHead tape
-printExecutionTrace ((state, tape) : rest) = do
-  putStrLn $ showTapeWithHead tape ++ " (current state: " ++ state ++ ")"
-  printExecutionTrace rest
+printExecutionTrace machine ((state, tape) : rest) = do
+  let sym = current tape
+
+  case Map.lookup (state, sym) (transitions machine) of
+    Nothing ->
+      putStrLn $ showTapeWithHead tape ++ " (no transition)"
+    Just (Transition to write dir) ->
+      putStrLn $
+        showTapeWithHead tape
+          ++ " ("
+          ++ state
+          ++ ", "
+          ++ [sym]
+          ++ ") -> ("
+          ++ to
+          ++ ", "
+          ++ [write]
+          ++ ", "
+          ++ showDir dir
+          ++ ")"
+
+  printExecutionTrace machine rest
+  where
+    showDir (-1) = "LEFT"
+    showDir 1 = "RIGHT"
+    showDir d = "UNKNOWN(" ++ show d ++ ")"

@@ -2,85 +2,112 @@
 
 module Json (parseTuringMachine) where
 
-import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:))
+import Data.Aeson
 import Data.Aeson qualified as A
 import Data.ByteString.Lazy qualified as B
-import Data.Map qualified as Map
+import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
-import Data.Vector qualified as V
 import TuringMachine
+
+-- ENTRY POINT -------------------------------------------------------------
 
 parseTuringMachine :: FilePath -> IO (Either String TuringMachine)
 parseTuringMachine filePath = do
   jsonData <- B.readFile filePath
-  pure $ do
-    JsonMachine tm <- A.eitherDecode jsonData
-    return tm
+  pure $ A.eitherDecode jsonData >>= parseMachine
 
-newtype JsonMachine = JsonMachine TuringMachine
+-- INTERNAL TYPES ----------------------------------------------------------
 
-newtype JsonTransition = JsonTransition Transition
+data RawMachine = RawMachine
+  { rAlphabet :: [T.Text],
+    rStates :: [T.Text],
+    rInitial :: T.Text,
+    rFinals :: [T.Text],
+    rTransitions :: Map.Map T.Text [RawTransition]
+  }
 
-instance FromJSON JsonMachine where
-  parseJSON = withObject "TuringMachine" $ \obj -> do
-    alphaStrings <- obj .: "alphabet"
-    stateStrings <- obj .: "states"
-    initStateStr <- obj .: "initial"
-    finalStateStrs <- obj .: "finals"
-    transObj <- obj .: "transitions"
+data RawTransition = RawTransition
+  { rRead :: T.Text,
+    rToState :: T.Text,
+    rWrite :: T.Text,
+    rAction :: T.Text
+  }
 
-    let statesList = map T.unpack stateStrings
-        finalList = map T.unpack finalStateStrs
-        initState = T.unpack initStateStr
+-- FROM JSON INSTANCES -----------------------------------------------------
 
-    alphabetChars <- mapM parseChar alphaStrings
+instance FromJSON RawMachine where
+  parseJSON = withObject "TuringMachine" $ \obj ->
+    RawMachine
+      <$> obj .: "alphabet"
+      <*> obj .: "states"
+      <*> obj .: "initial"
+      <*> obj .: "finals"
+      <*> obj .: "transitions"
 
-    transList <- mapM parseOne (Map.toList transObj)
-    let transMap = Map.fromList transList
+instance FromJSON RawTransition where
+  parseJSON = withObject "Transition" $ \obj ->
+    RawTransition
+      <$> obj .: "read"
+      <*> obj .: "to_state"
+      <*> obj .: "write"
+      <*> obj .: "action"
 
-    return $
-      JsonMachine $
-        TuringMachine
-          { alphabet = alphabetChars,
-            states = statesList,
-            initialState = initState,
-            finalStates = finalList,
-            transitions = transMap
-          }
-    where
-      parseChar (String t) =
-        let str = T.unpack t
-         in case str of
-              [c] -> return c
-              _ -> fail $ "Expected single character, got: " ++ str
-      parseChar _ = fail "Expected string for alphabet"
+-- CONVERSION --------------------------------------------------------------
 
-      parseOne (key, val) = do
-        let (state, sym) = parseKey key
-        JsonTransition trans <- parseJSON val
-        return ((state, sym), trans)
+parseMachine :: RawMachine -> Either String TuringMachine
+parseMachine raw = do
+  alphabet <- mapM parseChar (rAlphabet raw)
 
-parseKey :: T.Text -> (State, Symbol)
-parseKey t =
-  let str = T.unpack t
-      (statePart, rest) = break (== ',') str
-      symPart = drop 1 rest
-      sym = case symPart of
-        [] -> '.'
-        (c : _) -> c
-   in (statePart, sym)
+  let states = map T.unpack (rStates raw)
+      initial = T.unpack (rInitial raw)
+      finals = map T.unpack (rFinals raw)
 
-instance FromJSON JsonTransition where
-  parseJSON = withArray "Transition" $ \vec -> do
-    let arr = V.toList vec
-    case arr of
-      [nextStateVal, writeCharVal, directionVal] -> do
-        nextState <- parseJSON nextStateVal
-        writeChar <- parseJSON writeCharVal
-        directionStr <- parseJSON directionVal
-        dir <- case directionStr of
-          "RIGHT" -> return 1
-          "LEFT" -> return (-1)
-          _ -> fail $ "Invalid direction: " ++ directionStr
-        return $ JsonTransition $ Transition nextState writeChar dir
-      _ -> fail "Transition must have exactly 3 elements"
+  transitionsList <- concat <$> mapM parseState (Map.toList (rTransitions raw))
+
+  let transitions = Map.fromList transitionsList
+
+  pure $
+    TuringMachine
+      { alphabet = alphabet,
+        states = states,
+        initialState = initial,
+        finalStates = finals,
+        transitions = transitions
+      }
+
+-- PARSE TRANSITIONS -------------------------------------------------------
+
+parseState ::
+  (T.Text, [RawTransition]) ->
+  Either String [((State, Symbol), Transition)]
+parseState (stateTxt, transitions) = do
+  let state = T.unpack stateTxt
+  mapM (parseOne state) transitions
+
+parseOne ::
+  State ->
+  RawTransition ->
+  Either String ((State, Symbol), Transition)
+parseOne state raw = do
+  readSym <- parseChar (rRead raw)
+  writeSym <- parseChar (rWrite raw)
+  dir <- parseDirection (rAction raw)
+
+  let nextState = T.unpack (rToState raw)
+
+  pure ((state, readSym), Transition nextState writeSym dir)
+
+-- HELPERS -----------------------------------------------------------------
+
+parseChar :: T.Text -> Either String Char
+parseChar t =
+  case T.unpack t of
+    [c] -> Right c
+    _ -> Left $ "Expected single character, got: " ++ T.unpack t
+
+parseDirection :: T.Text -> Either String Direction
+parseDirection t =
+  case t of
+    "RIGHT" -> Right 1
+    "LEFT" -> Right (-1)
+    _ -> Left $ "Invalid direction: " ++ T.unpack t
