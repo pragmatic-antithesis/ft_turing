@@ -19,17 +19,18 @@ showTapeWithHead (Tape l cur r) =
   "[" ++ reverse l ++ "<" ++ [cur] ++ ">" ++ take 20 r ++ "]"
 
 applyTransition :: Symbol -> Transition -> Tape -> Tape
-applyTransition blank (Transition _ writeSym dir) tape =
-  move blank dir (writeSymbol writeSym tape)
-  where
-    writeSymbol sym (Tape l _ r) = Tape l sym r
+applyTransition blank (Transition _ writeSym dir) (Tape l _ r) =
+  move blank dir (Tape l writeSym r)
 
 move :: Symbol -> Direction -> Tape -> Tape
-move _ (-1) (Tape (l : ls) cur r) = Tape ls l (cur : r)
-move blank (-1) (Tape [] cur r) = Tape [] blank (cur : r)
-move _ 1 (Tape l cur (r : rs)) = Tape (cur : l) r rs
-move blank 1 (Tape l cur []) = Tape (cur : l) blank []
-move _ d _ = error ("Invalid direction: " ++ show d)
+move blank dir (Tape l cur r)
+  | dir == -1 = case l of
+      (x : xs) -> Tape xs x (cur : r) -- move left
+      [] -> Tape [] blank (cur : r) -- extend left with blank
+  | dir == 1 = case r of
+      (x : xs) -> Tape (cur : l) x xs -- move right
+      [] -> Tape (cur : l) blank [] -- extend right with blank
+  | otherwise = error ("Invalid direction: " ++ show dir)
 
 stepMachine :: TuringMachine -> State -> Tape -> Maybe (State, Tape)
 stepMachine machine state tape = do
