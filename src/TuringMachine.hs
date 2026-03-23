@@ -12,7 +12,9 @@ data Transition = Transition State Symbol Direction
   deriving (Show)
 
 data TuringMachine = TuringMachine
-  { alphabet :: [Symbol],
+  { name :: String,
+    alphabet :: [Symbol],
+    blank :: Symbol,
     states :: [State],
     initialState :: State,
     finalStates :: [State],

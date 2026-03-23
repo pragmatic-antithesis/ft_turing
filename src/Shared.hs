@@ -25,17 +25,24 @@ helpMessage = "usage: ft_turing [-h] jsonfile input\n\npositional arguments:\n  
 
 printMachineInfo :: TuringMachine -> IO ()
 printMachineInfo machine = do
-  putStrLn $ replicate 80 '*'
-  putStrLn $ "*" ++ replicate 78 ' ' ++ "*"
-  putStrLn $ "* " ++ initialState machine ++ " *"
-  putStrLn $ "*" ++ replicate 78 ' ' ++ "*"
-  putStrLn $ replicate 80 '*'
+  let totalWidth = 80
+      innerWidth = totalWidth - 2
+      n = length (name machine)
+      leftPad = (innerWidth - n) `div` 2
+      rightPad = innerWidth - n - leftPad
+      paddedName = replicate leftPad ' ' ++ name machine ++ replicate rightPad ' '
+
+  putStrLn $ replicate totalWidth '*'
+  putStrLn $ "*" ++ replicate innerWidth ' ' ++ "*"
+  putStrLn $ "*" ++ paddedName ++ "*"
+  putStrLn $ "*" ++ replicate innerWidth ' ' ++ "*"
+  putStrLn $ replicate totalWidth '*'
   putStrLn $ "Alphabet: [ " ++ intercalate ", " (Prelude.map (: []) (alphabet machine)) ++ " ]"
   putStrLn $ "States : [ " ++ intercalate ", " (states machine) ++ " ]"
   putStrLn $ "Initial : " ++ initialState machine
   putStrLn $ "Finals : [ " ++ intercalate ", " (finalStates machine) ++ " ]"
   mapM_ (uncurry printTransition) (Map.toList (transitions machine))
-  putStrLn $ replicate 80 '*'
+  putStrLn $ replicate innerWidth '*'
 
 printTransition :: (State, Symbol) -> Transition -> IO ()
 printTransition (state, sym) (Transition nextState writeSym dir) = do

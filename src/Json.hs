@@ -9,17 +9,15 @@ import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import TuringMachine
 
--- ENTRY POINT -------------------------------------------------------------
-
 parseTuringMachine :: FilePath -> IO (Either String TuringMachine)
 parseTuringMachine filePath = do
   jsonData <- B.readFile filePath
   pure $ A.eitherDecode jsonData >>= parseMachine
 
--- INTERNAL TYPES ----------------------------------------------------------
-
 data RawMachine = RawMachine
-  { rAlphabet :: [T.Text],
+  { rName :: T.Text,
+    rAlphabet :: [T.Text],
+    rBlank :: T.Text,
     rStates :: [T.Text],
     rInitial :: T.Text,
     rFinals :: [T.Text],
@@ -33,12 +31,12 @@ data RawTransition = RawTransition
     rAction :: T.Text
   }
 
--- FROM JSON INSTANCES -----------------------------------------------------
-
 instance FromJSON RawMachine where
   parseJSON = withObject "TuringMachine" $ \obj ->
     RawMachine
-      <$> obj .: "alphabet"
+      <$> obj .: "name"
+      <*> obj .: "alphabet"
+      <*> obj .: "blank"
       <*> obj .: "states"
       <*> obj .: "initial"
       <*> obj .: "finals"
@@ -52,12 +50,11 @@ instance FromJSON RawTransition where
       <*> obj .: "write"
       <*> obj .: "action"
 
--- CONVERSION --------------------------------------------------------------
-
 parseMachine :: RawMachine -> Either String TuringMachine
 parseMachine raw = do
+  let name = T.unpack (rName raw)
   alphabet <- mapM parseChar (rAlphabet raw)
-
+  blank <- parseChar (rBlank raw)
   let states = map T.unpack (rStates raw)
       initial = T.unpack (rInitial raw)
       finals = map T.unpack (rFinals raw)
@@ -68,14 +65,14 @@ parseMachine raw = do
 
   pure $
     TuringMachine
-      { alphabet = alphabet,
+      { name = name,
+        alphabet = alphabet,
+        blank = blank,
         states = states,
         initialState = initial,
         finalStates = finals,
         transitions = transitions
       }
-
--- PARSE TRANSITIONS -------------------------------------------------------
 
 parseState ::
   (T.Text, [RawTransition]) ->
@@ -96,8 +93,6 @@ parseOne state raw = do
   let nextState = T.unpack (rToState raw)
 
   pure ((state, readSym), Transition nextState writeSym dir)
-
--- HELPERS -----------------------------------------------------------------
 
 parseChar :: T.Text -> Either String Char
 parseChar t =

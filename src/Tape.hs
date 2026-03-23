@@ -10,39 +10,38 @@ data Tape = Tape
   }
   deriving (Show, Eq)
 
-initialTape :: String -> Tape
-initialTape [] = Tape [] '.' []
-initialTape (c : cs) = Tape [] c cs
+initialTape :: Symbol -> String -> Tape
+initialTape blank [] = Tape [] blank []
+initialTape _ (c : cs) = Tape [] c cs
 
 showTapeWithHead :: Tape -> String
 showTapeWithHead (Tape l cur r) =
   "[" ++ reverse l ++ "<" ++ [cur] ++ ">" ++ take 20 r ++ "]"
 
-applyTransition :: Transition -> Tape -> Tape
-applyTransition (Transition _ writeSym dir) tape =
-  move dir (writeSymbol writeSym tape)
+applyTransition :: Symbol -> Transition -> Tape -> Tape
+applyTransition blank (Transition _ writeSym dir) tape =
+  move blank dir (writeSymbol writeSym tape)
   where
-    writeSymbol :: Symbol -> Tape -> Tape
     writeSymbol sym (Tape l _ r) = Tape l sym r
 
-move :: Direction -> Tape -> Tape
-move (-1) (Tape (l : ls) cur r) = Tape ls l (cur : r)
-move (-1) (Tape [] cur r) = Tape [] '.' (cur : r)
-move 1 (Tape l cur (r : rs)) = Tape (cur : l) r rs
-move 1 (Tape l cur []) = Tape (cur : l) '.' []
-move d _ = error ("Invalid direction: " ++ show d)
+move :: Symbol -> Direction -> Tape -> Tape
+move _ (-1) (Tape (l : ls) cur r) = Tape ls l (cur : r)
+move blank (-1) (Tape [] cur r) = Tape [] blank (cur : r)
+move _ 1 (Tape l cur (r : rs)) = Tape (cur : l) r rs
+move blank 1 (Tape l cur []) = Tape (cur : l) blank []
+move _ d _ = error ("Invalid direction: " ++ show d)
 
 stepMachine :: TuringMachine -> State -> Tape -> Maybe (State, Tape)
 stepMachine machine state tape = do
   let sym = current tape
   Transition nextState writeSym dir <-
     Map.lookup (state, sym) (transitions machine)
-  let newTape = applyTransition (Transition nextState writeSym dir) tape
+  let newTape = applyTransition (blank machine) (Transition nextState writeSym dir) tape
   return (nextState, newTape)
 
 runMachine :: TuringMachine -> String -> IO (Either String [(State, Tape)])
 runMachine machine input = do
-  let initial = (initialState machine, initialTape input)
+  let initial = (initialState machine, initialTape (blank machine) input)
   runSteps initial []
   where
     runSteps :: (State, Tape) -> [(State, Tape)] -> IO (Either String [(State, Tape)])
