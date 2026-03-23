@@ -1,70 +1,86 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Json where
+module Json (parseTuringMachine) where
 
-import Data.Aeson (FromJSON, eitherDecode, withObject, withText, (.:))
-import Data.Aeson qualified as Aeson
-import Data.Aeson.Key qualified as Key
-import Data.Aeson.KeyMap qualified as KM
-import Data.Aeson.Types (Parser)
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:))
+import Data.Aeson qualified as A
 import Data.ByteString.Lazy qualified as B
 import Data.Map qualified as Map
 import Data.Text qualified as T
+import Data.Vector qualified as V
 import TuringMachine
 
-newtype JsonAction = JsonAction Action
+parseTuringMachine :: FilePath -> IO (Either String TuringMachine)
+parseTuringMachine filePath = do
+  jsonData <- B.readFile filePath
+  pure $ do
+    JsonMachine tm <- A.eitherDecode jsonData
+    return tm
+
+newtype JsonMachine = JsonMachine TuringMachine
 
 newtype JsonTransition = JsonTransition Transition
 
-newtype JsonTuringMachine = JsonTuringMachine TuringMachine
+instance FromJSON JsonMachine where
+  parseJSON = withObject "TuringMachine" $ \obj -> do
+    alphaStrings <- obj .: "alphabet"
+    stateStrings <- obj .: "states"
+    initStateStr <- obj .: "initial"
+    finalStateStrs <- obj .: "finals"
+    transObj <- obj .: "transitions"
 
-instance FromJSON JsonAction where
-  parseJSON = withText "Action" $ \a ->
-    case a of
-      "LEFT" -> pure $ JsonAction TuringMachine.Left
-      "RIGHT" -> pure $ JsonAction TuringMachine.Right
-      _ -> fail $ "Invalid action: " ++ T.unpack a
+    let statesList = map T.unpack stateStrings
+        finalList = map T.unpack finalStateStrs
+        initState = T.unpack initStateStr
+
+    alphabetChars <- mapM parseChar alphaStrings
+
+    transList <- mapM parseOne (Map.toList transObj)
+    let transMap = Map.fromList transList
+
+    return $
+      JsonMachine $
+        TuringMachine
+          { alphabet = alphabetChars,
+            states = statesList,
+            initialState = initState,
+            finalStates = finalList,
+            transitions = transMap
+          }
+    where
+      parseChar (String t) =
+        let str = T.unpack t
+         in case str of
+              [c] -> return c
+              _ -> fail $ "Expected single character, got: " ++ str
+      parseChar _ = fail "Expected string for alphabet"
+
+      parseOne (key, val) = do
+        let (state, sym) = parseKey key
+        JsonTransition trans <- parseJSON val
+        return ((state, sym), trans)
+
+parseKey :: T.Text -> (State, Symbol)
+parseKey t =
+  let str = T.unpack t
+      (statePart, rest) = break (== ',') str
+      symPart = drop 1 rest
+      sym = case symPart of
+        [] -> '.'
+        (c : _) -> c
+   in (statePart, sym)
 
 instance FromJSON JsonTransition where
-  parseJSON = withObject "Transition" $ \t -> do
-    readChar <- t .: "read"
-    toState <- t .: "to_state"
-    writeChar <- t .: "write"
-    JsonAction action <- t .: "action"
-    pure $
-      JsonTransition $
-        Transition readChar toState writeChar action
-
-instance FromJSON JsonTuringMachine where
-  parseJSON = withObject "TuringMachine" $ \m -> do
-    name <- m .: "name"
-    alphabet <- m .: "alphabet"
-    blank <- m .: "blank"
-    states <- m .: "states"
-    initial <- m .: "initial"
-    finals <- m .: "finals"
-
-    transitionsObj <- (m .: "transitions" :: Parser Aeson.Object)
-    transitions <- parseTransitions transitionsObj
-
-    pure $
-      JsonTuringMachine $
-        TuringMachine name alphabet blank states initial finals transitions
-
-parseTransitions :: Aeson.Object -> Parser (Map.Map T.Text [Transition])
-parseTransitions obj = do
-  let pairs = KM.toList obj
-  parsed <- mapM parsePair pairs
-  pure $ Map.fromList parsed
-  where
-    parsePair (k, v) = do
-      ts <- Aeson.parseJSON v
-      let transitions = [t | JsonTransition t <- ts]
-      pure (Key.toText k, transitions)
-
-readTuringMachine :: FilePath -> IO (Either String TuringMachine)
-readTuringMachine filePath = do
-  jsonData <- B.readFile filePath
-  case eitherDecode jsonData of
-    Prelude.Left err -> pure $ Prelude.Left err
-    Prelude.Right (JsonTuringMachine tm) -> pure $ Prelude.Right tm
+  parseJSON = withArray "Transition" $ \vec -> do
+    let arr = V.toList vec
+    case arr of
+      [nextStateVal, writeCharVal, directionVal] -> do
+        nextState <- parseJSON nextStateVal
+        writeChar <- parseJSON writeCharVal
+        directionStr <- parseJSON directionVal
+        dir <- case directionStr of
+          "RIGHT" -> return 1
+          "LEFT" -> return (-1)
+          _ -> fail $ "Invalid direction: " ++ directionStr
+        return $ JsonTransition $ Transition nextState writeChar dir
+      _ -> fail "Transition must have exactly 3 elements"

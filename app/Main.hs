@@ -2,40 +2,28 @@ module Main where
 
 import Args (parseArgs)
 import Data.Map qualified as Map
-import Data.Text qualified as T
-import Json (readTuringMachine)
-import Shared (exit)
+import Json (parseTuringMachine)
+import Shared qualified as S
 import System.Environment (getArgs)
-import TuringMachine
+import Tape
 
 main :: IO ()
 main = do
   args <- getArgs
   case parseArgs args of
-    Prelude.Left message -> exit message
-    Prelude.Right (x, y) -> do
-      result <- readTuringMachine x
+    Left message -> S.exit message
+    Right (machineCandidate, input) -> do
+      result <- parseTuringMachine machineCandidate
       case result of
-        Prelude.Left err -> putStrLn $ "Error parsing JSON: " ++ err
-        Prelude.Right machine -> do
-          putStrLn $ "Machine name: " ++ T.unpack (name machine)
-          putStrLn $ "Initial state: " ++ T.unpack (initial machine)
-          putStrLn $ "Number of transitions: " ++ show (length (transitions machine))
+        Left err -> putStrLn $ "Error parsing JSON: " ++ err
+        Right machine -> do
+          S.printMachineInfo machine
+          putStrLn $ replicate 80 '*'
 
-          case Map.lookup (T.pack "scanright") (transitions machine) of
-            Nothing -> putStrLn "No transitions for scanright"
-            Just transitionsList -> do
-              putStrLn "\nTransitions for scanright:"
-              mapM_ printTransition transitionsList
+          -- Map.foldlWithKey (\_ k v -> S.printTransition k v) () (transitions machine)
+          -- putStrLn $ replicate 80 '*'
 
-printTransition :: Transition -> IO ()
-printTransition t =
-  putStrLn $
-    "  Read: "
-      ++ T.unpack (readChar t)
-      ++ " -> "
-      ++ T.unpack (toState t)
-      ++ ", Write: "
-      ++ T.unpack (writeChar t)
-      ++ ", Action: "
-      ++ show (action t)
+          runner <- runMachine machine input
+          case runner of
+            Left err -> S.exit err
+            Right trace -> S.printExecutionTrace trace
