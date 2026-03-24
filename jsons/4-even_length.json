@@ -1,0 +1,84 @@
+{
+    "name": "even_length_0s",
+    "alphabet": ["0", "X", "y", "n", "."],
+    "blank": ".",
+    "states": ["start", "mark_second", "accept", "reject", "HALT"],
+    "initial": "start",
+    "finals": ["HALT"],
+
+    "transitions": {
+        "start": [
+            {
+                "read": "0",
+                "to_state": "mark_second",
+                "write": "X",
+                "action": "RIGHT"
+            },
+            {
+                "read": "X",
+                "to_state": "start",
+                "write": "X",
+                "action": "RIGHT"
+            },
+            {
+                "read": ".",
+                "to_state": "accept",
+                "write": ".",
+                "action": "RIGHT"
+            }
+        ],
+
+        "mark_second": [
+            {
+                "read": "0",
+                "to_state": "start",
+                "write": "X",
+                "action": "RIGHT"
+            },
+            {
+                "read": "X",
+                "to_state": "mark_second",
+                "write": "X",
+                "action": "RIGHT"
+            },
+            {
+                "read": ".",
+                "to_state": "reject",
+                "write": ".",
+                "action": "RIGHT"
+            }
+        ],
+
+        "accept": [
+            {
+                "read": "0",
+                "to_state": "accept",
+                "write": "0",
+                "action": "RIGHT"
+            },
+            {
+                "read": "X",
+                "to_state": "accept",
+                "write": "X",
+                "action": "RIGHT"
+            },
+            { "read": ".", "to_state": "HALT", "write": "y", "action": "RIGHT" }
+        ],
+
+        "reject": [
+            {
+                "read": "0",
+                "to_state": "reject",
+                "write": "0",
+                "action": "RIGHT"
+            },
+            {
+                "read": "X",
+                "to_state": "reject",
+                "write": "X",
+                "action": "RIGHT"
+            },
+            { "read": ".", "to_state": "HALT", "write": "n", "action": "RIGHT" }
+        ]
+    }
+}
