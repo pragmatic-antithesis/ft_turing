@@ -2,9 +2,9 @@
     "name": "unary_add",
     "alphabet": ["1", ".", "+", "="],
     "blank": ".",
-    "states": ["scan", "HALT", "ERROR"],
+    "states": ["scan", "del", "HALT"],
     "initial": "scan",
-    "finals": ["HALT", "ERROR"],
+    "finals": ["HALT"],
     "transitions": {
         "scan": [
             {
@@ -21,13 +21,15 @@
             },
             {
                 "read": "=",
-                "to_state": "HALT",
+                "to_state": "del",
                 "write": ".",
                 "action": "LEFT"
-            },
+            }
+        ],
+        "del": [
             {
-                "read": ".",
-                "to_state": "ERROR",
+                "read": "1",
+                "to_state": "HALT",
                 "write": ".",
                 "action": "RIGHT"
             }

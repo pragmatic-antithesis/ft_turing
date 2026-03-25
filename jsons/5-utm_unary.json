@@ -1,0 +1,259 @@
+{
+    "name": "utm_add",
+    "alphabet": [
+        "1",
+        ".",
+        "+",
+        "=",
+        ";",
+        ":",
+        ",",
+        "|",
+        "_",
+        ".",
+        "#",
+        "A",
+        "F",
+        "H",
+        "I",
+        "L",
+        "R",
+        "S",
+        "T",
+        "a",
+        "c",
+        "d",
+        "e",
+        "f",
+        "h",
+        "l",
+        "n",
+        "o",
+        "r",
+        "s",
+        "t",
+        "w"
+    ],
+    "blank": ".",
+    "states": ["parse", "exec", "del", "HALT", "ERROR"],
+    "initial": "parse",
+    "finals": ["HALT", "ERROR"],
+    "transitions": {
+        "parse": [
+            {
+                "read": "1",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "+",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "=",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": ";",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": ":",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": ",",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "|",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "_",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": ".",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "#",
+                "to_state": "exec",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "A",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "F",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "H",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "I",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "L",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "R",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "S",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "T",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "a",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "c",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "d",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "e",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "f",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "h",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "l",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "n",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "o",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "r",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "s",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "t",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            },
+            {
+                "read": "w",
+                "to_state": "parse",
+                "write": ".",
+                "action": "RIGHT"
+            }
+        ],
+        "exec": [
+            {
+                "read": "1",
+                "to_state": "exec",
+                "write": "1",
+                "action": "RIGHT"
+            },
+            {
+                "read": "+",
+                "to_state": "exec",
+                "write": "1",
+                "action": "RIGHT"
+            },
+            {
+                "read": "=",
+                "to_state": "del",
+                "write": ".",
+                "action": "LEFT"
+            }
+        ],
+        "del": [
+            {
+                "read": "1",
+                "to_state": "HALT",
+                "write": ".",
+                "action": "RIGHT"
+            }
+        ]
+    }
+}
