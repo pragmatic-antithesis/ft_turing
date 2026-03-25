@@ -1,1 +1,8 @@
 A:1.+=;S:scan,del,HALT;I:scan;F:HALT;T:scan|rd_1,to_scan,wr_1,ac_R|rd_+,to_scan,wr_1,ac_R|rd_=,to_scan,wr_.,ac_L|:del|rd_1,to_HALT,wr_.,ac_R|;I:#1111+11=
+
+
+A:1.+=;S:s,d,H;I:s;F:H;T:s|r1,ts,w1,aR|r+,ts,w1,aR|r=,ts,w.,aL|T:d|r1,th,w.,aR|;I:#1111+11=
+
+
+
+A1+=;Ss,d,H;Is;FH;Ts|r1,ts,w1,aR|r+,ts,w1,aR|r=,ts,w.,aL|Td|r1,th,w.,aR|;I#1111+11=

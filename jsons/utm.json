@@ -1,0 +1,56 @@
+{
+    "name": "utm_add",
+    "alphabet": [
+        "A",
+        "1",
+        ".",
+        "+",
+        "=",
+        ";",
+        "S",
+        "s",
+        "d",
+        "H",
+        "I",
+        "F",
+        "T",
+        "t",
+        "r",
+        "w",
+        "a",
+        "R",
+        "L",
+        "|",
+        ",",
+        "#",
+        "$"
+    ],
+    "blank": ".",
+    "states": ["alphabet_parse", "del", "HALT", "ERROR"],
+    "initial": "alphabet_parse",
+    "finals": ["HALT", "ERROR"],
+    "transitions": {
+        "alphabet_parse": [
+            {
+                "read": "A",
+                "to_state": "alphabet_parse",
+                "write": "A",
+                "action": "RIGHT"
+            },
+            {
+                "read": ";",
+                "to_state": "ERROR",
+                "write": ";",
+                "action": "LEFT"
+            }
+        ],
+        "del": [
+            {
+                "read": "1",
+                "to_state": "HALT",
+                "write": ".",
+                "action": "RIGHT"
+            }
+        ]
+    }
+}
